@@ -1,112 +1,9 @@
-document.addEventListener('DOMContentLoaded', function() {
-    new Vue({
-        el: '#app',
-        data: () => ({
-            columns: [
-                {title: 'Запланированные', cards: []},
-                {title: 'В работе', cards: []},
-                {title: 'Тестирование', cards: []},
-                {title: 'Завершённые', cards: []}
-            ],
-            showCardModal: false,
-            showReturnModal: false,
-            formData: {title: '', description: '', deadline: ''},
-            editingCard: null,
-            returnReason: '',
-            currentCardId: null
-        }),
-        methods: {
-            openAddModal() {
-                this.formData = {title: '', description: '', deadline: ''};
-                this.editingCard = null;
-                this.showCardModal = true;
-            },
-            openEditModal(card) {
-                this.formData = {...card};
-                this.editingCard = card;
-                this.showCardModal = true;
-            },
-            saveCard() {
-                if (!this.formData.title || !this.formData.deadline) return;
-
-                if (this.editingCard) {
-                    Object.assign(this.editingCard, this.formData, {
-                        lastEdited: new Date().toLocaleString()
-                    });
-                } else {
-                    this.columns[0].cards.push({
-                        id: Date.now(),
-                        ...this.formData,
-                        createdAt: new Date().toLocaleString(),
-                        lastEdited: null,
-                        isOverdue: false,
-                        isCompleted: false,
-                        returnReason: null
-                    });
-                }
-                this.closeModal();
-            },
-            deleteCard(cardId) {
-                this.columns.forEach(col => col.cards = col.cards.filter(c => c.id !== cardId));
-            },
-            moveCard({cardId, from, to}) {
-                const card = this.findCard(cardId);
-                if (!card) return;
-
-                // Удаляем из исходной колонки
-                this.columns[from].cards = this.columns[from].cards.filter(c => c.id !== cardId);
-
-                // Обработка завершения
-                if (to === 3) {
-                    const deadline = new Date(card.deadline);
-                    card.isOverdue = new Date() > deadline;
-                    card.isCompleted = !card.isOverdue;
-                    card.returnReason = null;
-                }
-
-                // Добавляем в целевую колонку
-                this.columns[to].cards.push(card);
-            },
-            openReturnModal(cardId) {
-                this.currentCardId = cardId;
-                this.showReturnModal = true;
-            },
-            confirmReturn() {
-                const card = this.findCard(this.currentCardId);
-                if (card) {
-                    card.returnReason = this.returnReason;
-                    this.moveCard({
-                        cardId: this.currentCardId,
-                        from: 2,
-                        to: 1
-                    });
-                    this.closeReturnModal();
-                }
-            },
-            findCard(cardId) {
-                for (const col of this.columns) {
-                    const card = col.cards.find(c => c.id === cardId);
-                    if (card) return card;
-                }
-                return null;
-            },
-            closeModal() {
-                this.showCardModal = false;
-                this.formData = {title: '', description: '', deadline: ''};
-                this.editingCard = null;
-            },
-            closeReturnModal() {
-                this.showReturnModal = false;
-                this.returnReason = '';
-                this.currentCardId = null;
-            }
-        }
-    });
+document.addEventListener('DOMContentLoaded', function () {
 
     Vue.component('kanban-card', {
-        props: ['card'],
+        props: ['card', 'columnIndex'],
         template: `
-        <div class="kanban-card">
+            <div class="kanban-card">
                 <h3>{{ card.title }}</h3>
                 <p>{{ card.description }}</p>
                 <p>Создано: {{ card.createdAt }}</p>
@@ -137,9 +34,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     Vue.component('kanban-column', {
-        props: ['column'],
+        props: ['column', 'columnIndex'],
         template: `
-       <div class="kanban-column">
+            <div class="kanban-column">
                 <h2>{{ column.title }}</h2>
                 <button v-if="columnIndex === 0" @click="$emit('add-card')">Новая карточка</button>
                 <kanban-card 
@@ -153,13 +50,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     @open-return-modal="$emit('open-return-modal', $event)"
                 />
             </div>
-    `
+        `
     });
 
     Vue.component('kanban-board', {
         props: ['columns'],
         template: `
-       <div class="kanban-board">
+            <div class="kanban-board">
                 <kanban-column 
                     v-for="(column, index) in columns" 
                     :key="index" 
@@ -175,4 +72,104 @@ document.addEventListener('DOMContentLoaded', function() {
         `
     });
 
+    new Vue({
+        el: '#app',
+        data: () => ({
+            columns: [
+                { title: 'Запланированные', cards: [] },
+                { title: 'В работе', cards: [] },
+                { title: 'Тестирование', cards: [] },
+                { title: 'Завершённые', cards: [] }
+            ],
+            showCardModal: false,
+            showReturnModal: false,
+            formData: { title: '', description: '', deadline: '' },
+            editingCard: null,
+            returnReason: '',
+            currentCardId: null
+        }),
+        methods: {
+            openAddModal() {
+                this.formData = { title: '', description: '', deadline: '' };
+                this.editingCard = null;
+                this.showCardModal = true;
+            },
+            openEditModal(card) {
+                this.formData = { ...card };
+                this.editingCard = card;
+                this.showCardModal = true;
+            },
+            saveCard() {
+                if (!this.formData.title || !this.formData.deadline) return;
+
+                if (this.editingCard) {
+                    Object.assign(this.editingCard, this.formData, {
+                        lastEdited: new Date().toLocaleString()
+                    });
+                } else {
+                    this.columns[0].cards.push({
+                        id: Date.now(),
+                        ...this.formData,
+                        createdAt: new Date().toLocaleString(),
+                        lastEdited: null,
+                        isOverdue: false,
+                        isCompleted: false,
+                        returnReason: null
+                    });
+                }
+                this.closeModal();
+            },
+            deleteCard(cardId) {
+                this.columns.forEach(col => col.cards = col.cards.filter(c => c.id !== cardId));
+            },
+            moveCard({ cardId, from, to }) {
+                const card = this.findCard(cardId);
+                if (!card) return;
+
+                this.columns[from].cards = this.columns[from].cards.filter(c => c.id !== cardId);
+
+                if (to === 3) {
+                    const deadline = new Date(card.deadline);
+                    card.isOverdue = new Date() > deadline;
+                    card.isCompleted = !card.isOverdue;
+                    card.returnReason = null;
+                }
+
+                this.columns[to].cards.push(card);
+            },
+            openReturnModal(cardId) {
+                this.currentCardId = cardId;
+                this.showReturnModal = true;
+            },
+            confirmReturn() {
+                const card = this.findCard(this.currentCardId);
+                if (card) {
+                    card.returnReason = this.returnReason;
+                    this.moveCard({
+                        cardId: this.currentCardId,
+                        from: 2,
+                        to: 1
+                    });
+                    this.closeReturnModal();
+                }
+            },
+            findCard(cardId) {
+                for (const col of this.columns) {
+                    const card = col.cards.find(c => c.id === cardId);
+                    if (card) return card;
+                }
+                return null;
+            },
+            closeModal() {
+                this.showCardModal = false;
+                this.formData = { title: '', description: '', deadline: '' };
+                this.editingCard = null;
+            },
+            closeReturnModal() {
+                this.showReturnModal = false;
+                this.returnReason = '';
+                this.currentCardId = null;
+            }
+        }
+    });
 });
