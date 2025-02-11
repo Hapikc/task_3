@@ -9,7 +9,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 { title: 'Завершённые', cards: [] }
             ]
         }),
-        template: '<kanban-board :columns="columns"/>'
+        template: '<kanban-board :columns="columns"/>',
+        methods: {
+            addCard(columnIndex) {
+                this.columns[columnIndex].cards.push({
+                    id: Date.now(),
+                    title: `Задача ${this.columns[columnIndex].cards.length + 1}`,
+                    description: 'Описание задачи',
+                    deadline: '2023-12-31'
+                });
+            },
+            deleteCard(cardId) {
+                this.columns.forEach(col => {
+                    col.cards = col.cards.filter(c => c.id !== cardId);
+                });
+            }
+        }
     });
 
     Vue.component('kanban-card', {
