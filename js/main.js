@@ -3,28 +3,23 @@ document.addEventListener('DOMContentLoaded', function() {
         el: '#app',
         data: () => ({
             columns: [
-                { title: 'Запланированные', cards: [] },
-                { title: 'В работе', cards: [] },
-                { title: 'Тестирование', cards: [] },
-                { title: 'Завершённые', cards: [] }
+                {title: 'Запланированные', cards: []},
+                {title: 'В работе', cards: []},
+                {title: 'Тестирование', cards: []},
+                {title: 'Завершённые', cards: []}
             ],
-            showModal: false,
-            editingCard: null
+            showCardModal: false,
+            showReturnModal: false,
+            formData: {title: '', description: '', deadline: ''},
+            editingCard: null,
+            returnReason: '',
+            currentCardId: null
         }),
-        template: '<kanban-board :columns="columns"/>',
         methods: {
-            addCard(columnIndex) {
-                this.columns[columnIndex].cards.push({
-                    id: Date.now(),
-                    title: `Задача ${this.columns[columnIndex].cards.length + 1}`,
-                    description: 'Описание задачи',
-                    deadline: '2023-12-31'
-                });
-            },
-            deleteCard(cardId) {
-                this.columns.forEach(col => {
-                    col.cards = col.cards.filter(c => c.id !== cardId);
-                });
+            openAddModal() {
+                this.formData = {title: '', description: '', deadline: ''};
+                this.editingCard = null;
+                this.showCardModal = true;
             },
             openEditModal(card) {
                 this.formData = {...card};
@@ -51,6 +46,60 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 this.closeModal();
             },
+            deleteCard(cardId) {
+                this.columns.forEach(col => col.cards = col.cards.filter(c => c.id !== cardId));
+            },
+            moveCard({cardId, from, to}) {
+                const card = this.findCard(cardId);
+                if (!card) return;
+
+                // Удаляем из исходной колонки
+                this.columns[from].cards = this.columns[from].cards.filter(c => c.id !== cardId);
+
+                // Обработка завершения
+                if (to === 3) {
+                    const deadline = new Date(card.deadline);
+                    card.isOverdue = new Date() > deadline;
+                    card.isCompleted = !card.isOverdue;
+                    card.returnReason = null;
+                }
+
+                // Добавляем в целевую колонку
+                this.columns[to].cards.push(card);
+            },
+            openReturnModal(cardId) {
+                this.currentCardId = cardId;
+                this.showReturnModal = true;
+            },
+            confirmReturn() {
+                const card = this.findCard(this.currentCardId);
+                if (card) {
+                    card.returnReason = this.returnReason;
+                    this.moveCard({
+                        cardId: this.currentCardId,
+                        from: 2,
+                        to: 1
+                    });
+                    this.closeReturnModal();
+                }
+            },
+            findCard(cardId) {
+                for (const col of this.columns) {
+                    const card = col.cards.find(c => c.id === cardId);
+                    if (card) return card;
+                }
+                return null;
+            },
+            closeModal() {
+                this.showCardModal = false;
+                this.formData = {title: '', description: '', deadline: ''};
+                this.editingCard = null;
+            },
+            closeReturnModal() {
+                this.showReturnModal = false;
+                this.returnReason = '';
+                this.currentCardId = null;
+            }
         }
     });
 
