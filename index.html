@@ -10,7 +10,60 @@
 </head>
 <body>
 <div id="app">
+    <kanban-board :columns="columns">
+                  @add
+                  -card="openAddModal"
+                  @edit
+                  -card="openEditModal"
+                  @
+                  delete -card="deleteCard"
+                  @move
+                  -card="moveCard"
+                  @open
+                  -
+                  return -modal="openReturnModal">
+        < /kanban-board>
 
-</div>
+
+        <div v-if="showCardModal" class="modal-backdrop">
+            <div class="modal-content">
+                <h3>{{editingCard ? 'Редактировать карточку' : 'Новая карточка'}}</h3>
+                <div class="form-group">
+                    <input v-model="formData.title" placeholder="Заголовок" required>
+                </div>
+                <div class="form-group">
+                    <textarea v-model="formData.description" placeholder="Описание"></textarea>
+                </div>
+                <div class="form-group">
+                    <input type="date" v-model="formData.deadline" required>
+                </div>
+                <div class="actions">
+                    <button
+                            @click="saveCard">{{editingCard ? 'Сохранить' : 'Создать'}}
+                    </button>
+                    <button
+                            @click="closeModal">Отмена
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <div v-if="showReturnModal" class="modal-backdrop">
+            <div class="modal-content">
+                <h3>Вернуть карточку</h3>
+                <div class="form-group">
+                    <textarea v-model="returnReason" placeholder="Причина возврата"></textarea>
+                </div>
+                <div class="actions">
+                    <button
+                            @click="confirmReturn">Подтвердить
+                    </button>
+                    <button
+                            @click="closeReturnModal">Отмена
+                    </button>
+                </div>
+            </div>
+        </div>
 </body>
 </html>
