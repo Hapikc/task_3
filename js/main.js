@@ -15,4 +15,18 @@ document.addEventListener('DOMContentLoaded', function() {
     `
     });
 
+    Vue.component('kanban-column', {
+        props: ['column'],
+        template: `
+        <div class="kanban-column">
+            <h2>{{ column.title }}</h2>
+            <kanban-card 
+                v-for="card in column.cards" 
+                :key="card.id" 
+                :card="card"
+            />
+        </div>
+    `
+    });
+
 });
