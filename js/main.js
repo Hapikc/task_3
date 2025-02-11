@@ -1,7 +1,15 @@
 document.addEventListener('DOMContentLoaded', function() {
     new Vue({
         el: '#app',
-        template: '<div>Kanban Board</div>'
+        data: () => ({
+            columns: [
+                { title: 'Запланированные', cards: [] },
+                { title: 'В работе', cards: [] },
+                { title: 'Тестирование', cards: [] },
+                { title: 'Завершённые', cards: [] }
+            ]
+        }),
+        template: '<kanban-board :columns="columns"/>'
     });
 
     Vue.component('kanban-card', {
@@ -24,6 +32,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 v-for="card in column.cards" 
                 :key="card.id" 
                 :card="card"
+            />
+        </div>
+    `
+    });
+
+    Vue.component('kanban-board', {
+        props: ['columns'],
+        template: `
+        <div class="kanban-board">
+            <kanban-column 
+                v-for="(column, index) in columns" 
+                :key="index" 
+                :column="column"
             />
         </div>
     `
