@@ -1,9 +1,11 @@
 document.addEventListener('DOMContentLoaded', function () {
-
     Vue.component('kanban-card', {
         props: ['card', 'columnIndex'],
         template: `
-            <div class="kanban-card">
+            <div class="kanban-card" draggable="true"
+                 @dragstart="onDragStart"
+                 @dragover.prevent
+                 @drop="onDrop">
                 <h3>{{ card.title }}</h3>
                 <p>{{ card.description }}</p>
                 <p>Создано: {{ card.createdAt }}</p>
@@ -15,19 +17,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div>
                     <button v-if="columnIndex !== 3" @click="$emit('edit-card')">Редактировать</button>
                     <button @click="$emit('delete-card')">Удалить</button>
-                    <button v-if="columnIndex === 0" @click="move(1)">В работу</button>
-                    <button v-if="columnIndex === 1" @click="move(2)">Тестирование</button>
-                    <button v-if="columnIndex === 2" @click="$emit('open-return-modal', card.id)">Вернуть</button>
-                    <button v-if="columnIndex === 2" @click="move(3)">Завершить</button>
                 </div>
             </div>
         `,
         methods: {
-            move(toColumn) {
-                this.$emit('move-card', {
+            onDragStart(event) {
+                event.dataTransfer.setData('text/plain', JSON.stringify({
                     cardId: this.card.id,
-                    from: this.columnIndex,
-                    to: toColumn
+                    fromColumn: this.columnIndex
+                }));
+            },
+            onDrop(event) {
+                event.preventDefault();
+                const data = JSON.parse(event.dataTransfer.getData('text/plain'));
+                this.$emit('move-card', {
+                    cardId: data.cardId,
+                    from: data.fromColumn,
+                    to: this.columnIndex
                 });
             }
         }
@@ -36,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
     Vue.component('kanban-column', {
         props: ['column', 'columnIndex'],
         template: `
-            <div class="kanban-column">
+            <div class="kanban-column" @dragover.prevent @drop="onDrop">
                 <h2>{{ column.title }}</h2>
                 <button v-if="columnIndex === 0" @click="$emit('add-card')">Новая карточка</button>
                 <kanban-card 
@@ -47,10 +53,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     @edit-card="$emit('edit-card', card)"
                     @delete-card="$emit('delete-card', card.id)"
                     @move-card="$emit('move-card', $event)"
-                    @open-return-modal="$emit('open-return-modal', $event)"
                 />
             </div>
-        `
+        `,
+        methods: {
+            onDrop(event) {
+                event.preventDefault();
+                const data = JSON.parse(event.dataTransfer.getData('text/plain'));
+                this.$emit('move-card', {
+                    cardId: data.cardId,
+                    from: data.fromColumn,
+                    to: this.columnIndex
+                });
+            }
+        }
     });
 
     Vue.component('kanban-board', {
@@ -66,7 +82,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     @edit-card="$emit('edit-card', $event)"
                     @delete-card="$emit('delete-card', $event)"
                     @move-card="$emit('move-card', $event)"
-                    @open-return-modal="$emit('open-return-modal', $event)"
                 />
             </div>
         `
