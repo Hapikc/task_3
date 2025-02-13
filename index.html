@@ -14,8 +14,7 @@
                   @add-card="openAddModal"
                   @edit-card="openEditModal"
                   @delete-card="deleteCard"
-                  @move-card="moveCard"
-                  @open-return-modal="openReturnModal">
+                  @move-card="moveCard">
     </kanban-board>
 
     <div v-if="showCardModal" class="modal-backdrop">
@@ -45,7 +44,7 @@
             </div>
             <div class="actions">
                 <button @click="confirmReturn">Подтвердить</button>
-                <button @click="closeReturnModal">Отмена</button>
+                <button @click="cancelReturn">Отмена</button>
             </div>
         </div>
     </div>

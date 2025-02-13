@@ -5,7 +5,8 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="kanban-card" draggable="true"
                  @dragstart="onDragStart"
                  @dragover.prevent
-                 @drop="onDrop">
+                 @drop="onDrop"
+                 :class="{ dragging: isDragging }">
                 <h3>{{ card.title }}</h3>
                 <p>{{ card.description }}</p>
                 <p>Создано: {{ card.createdAt }}</p>
@@ -20,14 +21,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
         `,
+        data() {
+            return {
+                isDragging: false
+            };
+        },
         methods: {
             onDragStart(event) {
+                this.isDragging = true;
                 event.dataTransfer.setData('text/plain', JSON.stringify({
                     cardId: this.card.id,
                     fromColumn: this.columnIndex
                 }));
             },
             onDrop(event) {
+                this.isDragging = false;
                 event.preventDefault();
                 const data = JSON.parse(event.dataTransfer.getData('text/plain'));
                 this.$emit('move-card', {
@@ -101,7 +109,8 @@ document.addEventListener('DOMContentLoaded', function () {
             formData: { title: '', description: '', deadline: '' },
             editingCard: null,
             returnReason: '',
-            currentCardId: null
+            currentCardId: null,
+            pendingMove: null // Для хранения данных о перемещении
         }),
         methods: {
             openAddModal() {
@@ -138,6 +147,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 this.columns.forEach(col => col.cards = col.cards.filter(c => c.id !== cardId));
             },
             moveCard({ cardId, from, to }) {
+                // Если перемещение из "Тестирование" в "В работу", запрашиваем причину
+                if (from === 2 && to === 1) {
+                    this.currentCardId = cardId;
+                    this.pendingMove = { cardId, from, to };
+                    this.showReturnModal = true;
+                } else {
+                    this.performMove(cardId, from, to);
+                }
+            },
+            performMove(cardId, from, to) {
                 const card = this.findCard(cardId);
                 if (!card) return;
 
@@ -152,10 +171,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 this.columns[to].cards.push(card);
             },
-            openReturnModal(cardId) {
-                this.currentCardId = cardId;
-                this.showReturnModal = true;
-            },
             confirmReturn() {
                 if (!this.returnReason.trim()) {
                     alert('Укажите причину возврата');
@@ -164,13 +179,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 const card = this.findCard(this.currentCardId);
                 if (card) {
                     card.returnReason = this.returnReason;
-                    this.moveCard({
-                        cardId: this.currentCardId,
-                        from: 2,
-                        to: 1
-                    });
+                    this.performMove(this.pendingMove.cardId, this.pendingMove.from, this.pendingMove.to);
                     this.closeReturnModal();
                 }
+            },
+            cancelReturn() {
+                this.closeReturnModal();
             },
             findCard(cardId) {
                 for (const col of this.columns) {
@@ -188,6 +202,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 this.showReturnModal = false;
                 this.returnReason = '';
                 this.currentCardId = null;
+                this.pendingMove = null;
             }
         }
     });
