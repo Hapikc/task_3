@@ -18,7 +18,6 @@
                   @open-return-modal="openReturnModal">
     </kanban-board>
 
-    <!-- Модальное окно добавления/редактирования -->
     <div v-if="showCardModal" class="modal-backdrop">
         <div class="modal-content">
             <h3>{{ editingCard ? 'Редактировать карточку' : 'Новая карточка' }}</h3>
@@ -38,7 +37,6 @@
         </div>
     </div>
 
-    <!-- Модальное окно возврата -->
     <div v-if="showReturnModal" class="modal-backdrop">
         <div class="modal-content">
             <h3>Вернуть карточку</h3>

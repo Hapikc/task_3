@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <p v-if="card.isCompleted" class="completed">Выполнено в срок</p>
                 <p v-if="card.returnReason">Причина возврата: {{ card.returnReason }}</p>
                 <div>
-                    <button @click="$emit('edit-card')">Редактировать</button>
+                    <button v-if="columnIndex !== 3" @click="$emit('edit-card')">Редактировать</button>
                     <button @click="$emit('delete-card')">Удалить</button>
                     <button v-if="columnIndex === 0" @click="move(1)">В работу</button>
                     <button v-if="columnIndex === 1" @click="move(2)">Тестирование</button>
@@ -142,6 +142,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 this.showReturnModal = true;
             },
             confirmReturn() {
+                if (!this.returnReason.trim()) {
+                    alert('Укажите причину возврата');
+                    return;
+                }
                 const card = this.findCard(this.currentCardId);
                 if (card) {
                     card.returnReason = this.returnReason;
