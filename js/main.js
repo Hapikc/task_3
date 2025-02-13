@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function () {
             editingCard: null,
             returnReason: '',
             currentCardId: null,
-            pendingMove: null // Для хранения данных о перемещении
+            pendingMove: null
         }),
         methods: {
             openAddModal() {
@@ -147,7 +147,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 this.columns.forEach(col => col.cards = col.cards.filter(c => c.id !== cardId));
             },
             moveCard({ cardId, from, to }) {
-                // Если перемещение из "Тестирование" в "В работу", запрашиваем причину
+                if (from === 3 || (from === 0 && to !== 1) || (from === 1 && to !== 2)) {
+                    alert('Перемещение назад запрещено');
+                    return;
+                }
+
                 if (from === 2 && to === 1) {
                     this.currentCardId = cardId;
                     this.pendingMove = { cardId, from, to };
